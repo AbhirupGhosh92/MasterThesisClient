@@ -19,15 +19,13 @@ object Network {
         client = OkHttpClient().newBuilder().build()
     }
 
-    fun sendData(dataList : ArrayList<SensorPojo>,activity: String =  "LYINGFLAT") : LiveData<ResponsePojo>
+    fun sendData(dataList : ArrayList<MergedClass>) : LiveData<ResponsePojo>
     {
-
-        dataList.map {
-            it.activity = activity
-        }
 
 
         val body = Gson().toJson(dataList).toRequestBody(MEDIA_TYPE)
+
+        dataList.clear()
 
         val responseLiveData = MutableLiveData<ResponsePojo>()
 
