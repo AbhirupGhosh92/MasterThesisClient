@@ -1,13 +1,15 @@
 package com.test.masterthesisclient
 
-import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
+import com.test.masterthesisclient.config.Constants
+import com.test.masterthesisclient.models.MergedClass
+import com.test.masterthesisclient.models.ResponsePojo
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import java.io.IOException
 
 
@@ -19,11 +21,15 @@ object Network {
         client = OkHttpClient().newBuilder().build()
     }
 
-    fun sendData(dataList : ArrayList<MergedClass>) : LiveData<ResponsePojo>
+    fun sendData(dataList : ArrayList<MergedClass>, type : String) : LiveData<ResponsePojo>
     {
 
+        val json = JSONObject()
+        json.put("type",type)
+        json.put("data",Gson().toJson(dataList))
 
-        val body = Gson().toJson(dataList).toRequestBody(MEDIA_TYPE)
+
+        val body = json.toString().toRequestBody(MEDIA_TYPE)
 
         dataList.clear()
 

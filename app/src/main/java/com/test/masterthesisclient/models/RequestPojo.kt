@@ -1,4 +1,4 @@
-package com.test.masterthesisclient
+package com.test.masterthesisclient.models
 
 data class RequestPojo(
     var opType : Boolean,

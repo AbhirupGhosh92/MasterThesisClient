@@ -1,4 +1,4 @@
-package com.test.masterthesisclient
+package com.test.masterthesisclient.models
 
 data class MergedClass(
                         var activity : String,
