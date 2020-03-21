@@ -222,6 +222,9 @@ class BaseFragment : Fragment() {
         var adapter = ArrayAdapter<String>(requireContext(),R.layout.support_simple_spinner_dropdown_item,actionArray)
 
         databinding.spinner.setAdapter(adapter)
+        databinding.spinner.addTextChangedListener {enteredText ->
+
+        }
 
         databinding.seekBar.progress = 0
         databinding.textView.text = "Timer : - ${time}s"
