@@ -51,16 +51,20 @@ object Network {
             }
 
             override fun onResponse(call: Call, response: Response) {
+                var body = response.body?.string().toString()
                 try {
+
+
                     responseLiveData.postValue(
                         Gson().fromJson(
-                            response.body?.string(),
+                            body,
                             ResponsePojo::class.java
                         )
                     )
                 }catch (e : Exception)
                 {
                     e.printStackTrace()
+                    responseLiveData.postValue(ResponsePojo(response.message,response.code.toString(),body))
                 }
             }
 

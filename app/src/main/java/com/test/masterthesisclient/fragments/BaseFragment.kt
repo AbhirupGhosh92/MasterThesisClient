@@ -15,6 +15,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -22,6 +23,7 @@ import androidx.lifecycle.ViewModelProviders
 import com.test.masterthesisclient.Network
 
 import com.test.masterthesisclient.R
+import com.test.masterthesisclient.config.Constants
 import com.test.masterthesisclient.databinding.FragmentBaseBinding
 import com.test.masterthesisclient.models.MergedClass
 import com.test.masterthesisclient.models.SensorPojo
@@ -126,7 +128,11 @@ class BaseFragment : Fragment() {
         databinding = DataBindingUtil.inflate(inflater,R.layout.fragment_base,container,false)
         sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
+        databinding.edtServerUrl.addTextChangedListener {
 
+            if(it.isNullOrEmpty().not())
+            Constants.ngrokBaseUrl = it.toString()
+        }
 
         databinding.baseFragmentViewModel = ViewModelProviders.of(this)[BaseFragmentViewModel::class.java]
 
@@ -138,83 +144,84 @@ class BaseFragment : Fragment() {
             sensorManager.registerListener(gyroscopeListner,gyroscope, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
+        databinding.swSelector.setOnCheckedChangeListener { compoundButton, b ->
+
+            if(b)
+            {
+                databinding.tvSection.text = "PREDICTION"
+            }
+            else
+            {
+                databinding.tvSection.text = "TRAINING"
+            }
+
+        }
+
         databinding.tvOutTest.setOnClickListener {
 
-            recording = true
-            databinding.tvOutTest.text = "Recording ..."
-            databinding.tvOutTest.isEnabled = false
-            databinding.tvOutPred.isEnabled = false
+            databinding.tvOutTest.visibility = View.GONE
+
+            if(databinding.swSelector.isSelected) {
+                recording = true
+                databinding.tvOutTest.isEnabled = false
 
 
-            GlobalScope.launch(Dispatchers.Main) {
-                delay(time*1000.toLong())
-                recording = false
+                GlobalScope.launch(Dispatchers.Main) {
+                    delay(time * 1000.toLong())
+                    recording = false
 
-                processData()
+                    processData()
 
-                Log.d("Samples",mergedClass.size.toString())
-                databinding.tvOutTest.text = "Record"
-                databinding.tvOutTest.isEnabled = true
-                databinding.tvOutPred.isEnabled = true
-                //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
+                    Log.d("Samples", mergedClass.size.toString())
+                    //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
 
-                Network.sendData(mergedClass,"REC").observe(viewLifecycleOwner, Observer {
-                    try {
-                        Toast.makeText(requireContext(), it.payload, Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                })
+                    Network.sendData(mergedClass, "REC").observe(viewLifecycleOwner, Observer {
+                        try {
+                            Toast.makeText(requireContext(), it.payload, Toast.LENGTH_SHORT).show()
+                            databinding.tvOutTest.isEnabled = true
+                            databinding.tvOutTest.visibility = View.VISIBLE
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    })
+                }
+            }
+            else
+            {
+                recording = true
+                databinding.tvOutTest.isEnabled = false
+
+
+
+                GlobalScope.launch(Dispatchers.Main) {
+                    delay(time*1000.toLong())
+                    recording = false
+
+                    processData()
+
+                    Log.d("Samples",mergedClass.size.toString())
+                    //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
+
+                    Network.sendData(mergedClass,"PRED").observe(viewLifecycleOwner, Observer {
+                        try {
+                            Toast.makeText(requireContext(), it.payload, Toast.LENGTH_SHORT).show()
+                            databinding.tvOutTest.isEnabled = true
+                            databinding.tvOutTest.visibility = View.VISIBLE
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    })
+                }
             }
 
         }
 
-        databinding.tvOutPred.setOnClickListener {
-
-            recording = true
-            databinding.tvOutTest.text = "Predicting..."
-            databinding.tvOutTest.isEnabled = false
-            databinding.tvOutPred.isEnabled = false
-
-
-
-            GlobalScope.launch(Dispatchers.Main) {
-                delay(time*1000.toLong())
-                recording = false
-
-                processData()
-
-                Log.d("Samples",mergedClass.size.toString())
-                databinding.tvOutPred.text = "Predict"
-                databinding.tvOutTest.isEnabled = true
-                databinding.tvOutPred.isEnabled = true
-                //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
-
-                Network.sendData(mergedClass,"PRED").observe(viewLifecycleOwner, Observer {
-                    try {
-                        Toast.makeText(requireContext(), it.payload, Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                })
-            }
-        }
 
 
 
         var adapter = ArrayAdapter<String>(requireContext(),R.layout.support_simple_spinner_dropdown_item,actionArray)
-        databinding.spinner.adapter = adapter
-        databinding.spinner.onItemSelectedListener = object :  AdapterView.OnItemSelectedListener{
 
-            override fun onNothingSelected(p0: AdapterView<*>?) {
-
-            }
-
-            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                actionType = actionArray[p2]
-            }
-
-        }
+        databinding.spinner.setAdapter(adapter)
 
         databinding.seekBar.progress = 0
         databinding.textView.text = "Timer : - ${time}s"

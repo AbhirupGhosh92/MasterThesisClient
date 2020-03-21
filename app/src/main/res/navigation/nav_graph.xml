@@ -7,8 +7,7 @@
 
     <fragment
         android:id="@+id/baseFragment"
-        android:name="com.test.masterthesisclient.fragments.BaseFragment"
-        android:label="BaseFragment"
         tools:layout="@layout/fragment_base"
-        />
+        android:name="com.test.masterthesisclient.fragments.BaseFragment"
+        android:label="BaseFragment" />
 </navigation>
