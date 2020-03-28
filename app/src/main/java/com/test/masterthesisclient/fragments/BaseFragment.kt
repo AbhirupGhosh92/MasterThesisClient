@@ -43,6 +43,7 @@ class BaseFragment : Fragment() {
     private var actionType = "LYINGFLAT"
     private var actionArray = arrayOf("LYINGFLAT", "WALKING", "RUNNING", "SITTING", "STANDING")
     private var time = 0
+    private var STATE = ""
 
 
     private lateinit var sensorManager : SensorManager
@@ -149,10 +150,12 @@ class BaseFragment : Fragment() {
             if(b)
             {
                 databinding.tvSection.text = "PREDICTION"
+                STATE = "PRED"
             }
             else
             {
                 databinding.tvSection.text = "TRAINING"
+                STATE = "REC"
             }
 
         }
@@ -162,11 +165,19 @@ class BaseFragment : Fragment() {
             databinding.tvOutTest.visibility = View.GONE
 
             if(databinding.swSelector.isSelected) {
-                recording = true
                 databinding.tvOutTest.isEnabled = false
 
-
                 GlobalScope.launch(Dispatchers.Main) {
+
+                    Toast.makeText(requireContext(),"Starting in 3 seconds",Toast.LENGTH_SHORT).show()
+                    for(i in 0..2)
+                    {
+
+                        delay(1000)
+                    }
+
+                    recording = true
+
                     delay(time * 1000.toLong())
                     recording = false
 
@@ -175,7 +186,9 @@ class BaseFragment : Fragment() {
                     Log.d("Samples", mergedClass.size.toString())
                     //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
 
-                    Network.sendData(mergedClass, "REC").observe(viewLifecycleOwner, Observer {
+
+
+                    Network.sendData(mergedClass,STATE ).observe(viewLifecycleOwner, Observer {
                         try {
                             Toast.makeText(requireContext(), it.payload, Toast.LENGTH_SHORT).show()
                             databinding.tvOutTest.isEnabled = true
@@ -193,7 +206,16 @@ class BaseFragment : Fragment() {
 
 
 
-                GlobalScope.launch(Dispatchers.Main) {
+                 GlobalScope.launch(Dispatchers.Main) {
+
+                    Toast.makeText(requireContext(),"Starting in 3 seconds",Toast.LENGTH_SHORT).show()
+                    for(i in 0..2)
+                    {
+                        delay(1000)
+                    }
+
+                    recording = true
+
                     delay(time*1000.toLong())
                     recording = false
 
@@ -202,7 +224,7 @@ class BaseFragment : Fragment() {
                     Log.d("Samples",mergedClass.size.toString())
                     //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
 
-                    Network.sendData(mergedClass,"PRED").observe(viewLifecycleOwner, Observer {
+                    Network.sendData(mergedClass,STATE).observe(viewLifecycleOwner, Observer {
                         try {
                             Toast.makeText(requireContext(), it.payload, Toast.LENGTH_SHORT).show()
                             databinding.tvOutTest.isEnabled = true
