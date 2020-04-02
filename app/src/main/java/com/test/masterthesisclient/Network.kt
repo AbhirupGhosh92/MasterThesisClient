@@ -21,7 +21,7 @@ object Network {
         client = OkHttpClient().newBuilder().build()
     }
 
-    fun sendData(dataList : ArrayList<MergedClass>, type : String) : LiveData<ResponsePojo>
+    fun storeData(dataList : ArrayList<MergedClass>, type : String) : LiveData<ResponsePojo>
     {
 
         val json = JSONObject()
@@ -64,7 +64,111 @@ object Network {
                 }catch (e : Exception)
                 {
                     e.printStackTrace()
-                    responseLiveData.postValue(ResponsePojo(response.message,response.code.toString(),body))
+                    responseLiveData.postValue(ResponsePojo("ERROR",response.code.toString(),body,response.message))
+                }
+            }
+
+        })
+
+        return responseLiveData
+    }
+
+    fun trainModel(dataList : ArrayList<MergedClass>, type : String) : LiveData<ResponsePojo>
+    {
+
+        val json = JSONObject()
+        json.put("type",type)
+        json.put("data",Gson().toJson(dataList))
+
+
+        val body = json.toString().toRequestBody(MEDIA_TYPE)
+
+        dataList.clear()
+
+        val responseLiveData = MutableLiveData<ResponsePojo>()
+
+        val request = Request.Builder()
+            .method("POST",body)
+            .url(Constants.ngrokBaseUrl+"/trainModel")
+            .post(body)
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/json")
+            .build()
+
+
+        client.newCall(request).enqueue(object  : Callback{
+            override fun onFailure(call: Call, e: IOException) {
+                responseLiveData.postValue(null)
+                e.printStackTrace()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                var body = response.body?.string().toString()
+                try {
+
+
+                    responseLiveData.postValue(
+                        Gson().fromJson(
+                            body,
+                            ResponsePojo::class.java
+                        )
+                    )
+                }catch (e : Exception)
+                {
+                    e.printStackTrace()
+                    responseLiveData.postValue(ResponsePojo("ERROR",response.code.toString(),body,response.message))
+                }
+            }
+
+        })
+
+        return responseLiveData
+    }
+
+    fun predict(dataList : ArrayList<MergedClass>, type : String) : LiveData<ResponsePojo>
+    {
+
+        val json = JSONObject()
+        json.put("type",type)
+        json.put("data",Gson().toJson(dataList))
+
+
+        val body = json.toString().toRequestBody(MEDIA_TYPE)
+
+        dataList.clear()
+
+        val responseLiveData = MutableLiveData<ResponsePojo>()
+
+        val request = Request.Builder()
+            .method("POST",body)
+            .url(Constants.ngrokBaseUrl+"/predict")
+            .post(body)
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/json")
+            .build()
+
+
+        client.newCall(request).enqueue(object  : Callback{
+            override fun onFailure(call: Call, e: IOException) {
+                responseLiveData.postValue(null)
+                e.printStackTrace()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                var body = response.body?.string().toString()
+                try {
+
+
+                    responseLiveData.postValue(
+                        Gson().fromJson(
+                            body,
+                            ResponsePojo::class.java
+                        )
+                    )
+                }catch (e : Exception)
+                {
+                    e.printStackTrace()
+                    responseLiveData.postValue(ResponsePojo("ERROR",response.code.toString(),body,response.message))
                 }
             }
 
