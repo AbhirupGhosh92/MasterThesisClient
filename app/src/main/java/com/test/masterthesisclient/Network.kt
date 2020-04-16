@@ -1,5 +1,6 @@
 package com.test.masterthesisclient
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
@@ -21,7 +22,7 @@ object Network {
         client = OkHttpClient().newBuilder().build()
     }
 
-    fun storeData(dataList : ArrayList<MergedClass>, type : String) : LiveData<ResponsePojo>
+    fun storeData(dataList : ArrayList<MergedClass>, type : String = "REC") : LiveData<ResponsePojo>
     {
 
         val json = JSONObject()
@@ -30,6 +31,9 @@ object Network {
 
 
         val body = json.toString().toRequestBody(MEDIA_TYPE)
+
+        Log.d("Request_url" ,Constants.ngrokBaseUrl+"/storeData")
+        Log.d("Request_body" ,json.toString())
 
         dataList.clear()
 
@@ -46,8 +50,9 @@ object Network {
 
         client.newCall(request).enqueue(object  : Callback{
             override fun onFailure(call: Call, e: IOException) {
-                responseLiveData.postValue(null)
-                e.printStackTrace()
+
+                var resp = ResponsePojo("CONNCTION ERROR","503","{}",e.message.toString())
+                responseLiveData.postValue(resp)
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -98,8 +103,8 @@ object Network {
 
         client.newCall(request).enqueue(object  : Callback{
             override fun onFailure(call: Call, e: IOException) {
-                responseLiveData.postValue(null)
-                e.printStackTrace()
+                var resp = ResponsePojo("CONNCTION ERROR","503","{}",e.message.toString())
+                responseLiveData.postValue(resp)
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -133,9 +138,14 @@ object Network {
         json.put("data",Gson().toJson(dataList))
 
 
+        dataList.clear()
+
         val body = json.toString().toRequestBody(MEDIA_TYPE)
 
         dataList.clear()
+
+        Log.d("Request_url" ,Constants.ngrokBaseUrl+"/predict")
+        Log.d("Request_body" ,json.toString())
 
         val responseLiveData = MutableLiveData<ResponsePojo>()
 
@@ -150,8 +160,8 @@ object Network {
 
         client.newCall(request).enqueue(object  : Callback{
             override fun onFailure(call: Call, e: IOException) {
-                responseLiveData.postValue(null)
-                e.printStackTrace()
+                var resp = ResponsePojo("CONNCTION ERROR","503","{}",e.message.toString())
+                responseLiveData.postValue(resp)
             }
 
             override fun onResponse(call: Call, response: Response) {

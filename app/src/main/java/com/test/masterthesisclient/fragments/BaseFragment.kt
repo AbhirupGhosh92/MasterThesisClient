@@ -7,9 +7,10 @@ import android.hardware.SensorEventListener2
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.speech.tts.TextToSpeech
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,12 +18,13 @@ import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.test.masterthesisclient.Network
-
 import com.test.masterthesisclient.R
 import com.test.masterthesisclient.config.Constants
 import com.test.masterthesisclient.databinding.FragmentBaseBinding
@@ -46,8 +48,8 @@ class BaseFragment : Fragment() {
     private var actionType = "LYINGFLAT"
     private var actionArray = arrayOf("LYINGFLAT", "WALKING", "RUNNING",
         "SITTING", "STANDING",
-        "CLIMBING UP STAIRS",
-        "CLIMBING DOWN STAIRS")
+        "CLIMBING_UP_STAIRS",
+        "CLIMBING_DOWN_STAIRS")
     private var time = 0
     private var STATE = ""
     private lateinit var textToSpeech : TextToSpeech
@@ -70,7 +72,7 @@ class BaseFragment : Fragment() {
         }
 
         override fun onSensorChanged(p0: SensorEvent?) {
-            if(recording)
+            if(recording) {
                 dataListAcc.add(
                     SensorPojo(
                         x = p0?.values?.get(0),
@@ -78,6 +80,14 @@ class BaseFragment : Fragment() {
                         z = p0?.values?.get(2), timestamp = System.currentTimeMillis()
                     )
                 )
+
+                if(dataListAcc.size >= 68)
+                {
+                    recording = false
+                    captureData()
+                }
+
+            }
         }
 
     }
@@ -108,6 +118,7 @@ class BaseFragment : Fragment() {
     private fun processData()
     {
 
+
         var count = minOf(dataListAcc.size, dataListGy.size )
 
 
@@ -115,7 +126,7 @@ class BaseFragment : Fragment() {
         {
             mergedClass.add(
                 MergedClass(
-                    actionType, dataListAcc[i].timestamp,
+                    databinding.spinner.text.toString(), dataListAcc[i].timestamp,
                     dataListAcc[i].x, dataListAcc[i].y, dataListAcc[i].z,
                     dataListGy[i].x, dataListGy[i].x, dataListGy[i].x
 
@@ -128,6 +139,93 @@ class BaseFragment : Fragment() {
 
     }
 
+    private fun captureData()
+    {
+
+        for (i in 0 until 64)
+        {
+            mergedClass.add(
+                MergedClass(
+                    databinding.spinner.text.toString(), dataListAcc[i].timestamp,
+                    dataListAcc[i].x, dataListAcc[i].y, dataListAcc[i].z,
+                    dataListGy[i].x, dataListGy[i].x, dataListGy[i].x
+
+                )
+            )
+        }
+
+        sendPrediction()
+
+
+    }
+
+
+    private fun sendPrediction()
+    {
+        Log.d("Samples", mergedClass.size.toString())
+        //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
+
+        Network.predict(mergedClass, STATE)
+            .observe(viewLifecycleOwner, Observer {
+                try {
+
+
+
+                    mergedClass.clear()
+                    dataListAcc.clear()
+                    dataListGy.clear()
+
+                    recording = true
+
+                    if (it.code.equals("200")) {
+                        databinding.tvOutTest.isEnabled = true
+                        databinding.tvOutTest.visibility = View.VISIBLE
+                        databinding.textView.text = it.payload
+//                                textToSpeech.speak("Server error",TextToSpeech.QUEUE_FLUSH,
+//                                    null,null)
+
+                        Toast.makeText(
+                            requireContext(),
+                            "Data Saved",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        textToSpeech.speak(
+                            it.payload, TextToSpeech.QUEUE_FLUSH,
+                            null, null
+                        )
+                    } else if (it.code == "503") {
+                        Toast.makeText(
+                            requireContext(),
+                            it.message,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        textToSpeech.speak(
+                            it.message, TextToSpeech.QUEUE_FLUSH,
+                            null, null
+                        )
+                        databinding.tvOutTest.isEnabled = true
+                        databinding.tvOutTest.visibility = View.VISIBLE
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Server error",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        textToSpeech.speak(
+                            "Server error", TextToSpeech.QUEUE_FLUSH,
+                            null, null
+
+                        )
+                    }
+
+                    databinding.tvOutTest.isEnabled = true
+                    databinding.tvOutTest.visibility = View.VISIBLE
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            })
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreateView(
@@ -137,7 +235,6 @@ class BaseFragment : Fragment() {
     ): View? {
         databinding = DataBindingUtil.inflate(inflater,R.layout.fragment_base,container,false)
         sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
-
 
         textToSpeech = TextToSpeech(requireContext()){
             if(it != TextToSpeech.ERROR) {
@@ -161,26 +258,30 @@ class BaseFragment : Fragment() {
             sensorManager.registerListener(gyroscopeListner,gyroscope, SensorManager.SENSOR_DELAY_UI)
         }
 
-        databinding.swSelector.setOnCheckedChangeListener { compoundButton, b ->
 
-            if(b)
-            {
-                databinding.tvSection.text = "PREDICTION"
-                STATE = "PRED"
-                databinding.seekBar.visibility = View.GONE
-                databinding.textView.text = ""
-                databinding.spinner.visibility = View.GONE
-            }
-            else
-            {
-                databinding.tvSection.text = "TRAINING"
-                STATE = "REC"
-                databinding.seekBar.visibility = View.VISIBLE
-                databinding.textView.text = "Timer : - ${time}s"
-                databinding.spinner.visibility = View.VISIBLE
+            databinding.swSelector.setOnCheckedChangeListener { compoundButton, b ->
+
+
+                if(databinding.swSelector.isChecked)
+                {
+                    databinding.tvSection.text = "PREDICTION"
+                    STATE = "PRED"
+                    databinding.seekBar.visibility = View.GONE
+                    databinding.textView.text = ""
+                    databinding.spinner.visibility = View.GONE
+                }
+                else
+                {
+                    databinding.tvSection.text = "TRAINING"
+                    STATE = "REC"
+                    databinding.seekBar.visibility = View.VISIBLE
+                    databinding.textView.text = "Timer : - ${time}s"
+                    databinding.spinner.visibility = View.VISIBLE
+                }
+
+
             }
 
-        }
 
         databinding.tvOutTest.setOnClickListener {
 
@@ -215,19 +316,50 @@ class BaseFragment : Fragment() {
                     //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
 
 
-                    Network.storeData(mergedClass,STATE).observe(viewLifecycleOwner, Observer {
+                    Network.storeData(mergedClass).observe(viewLifecycleOwner, Observer {
                         try {
+
+
                             if(it.code.equals("200")) {
                                 databinding.tvOutTest.isEnabled = true
                                 databinding.tvOutTest.visibility = View.VISIBLE
-//                                textToSpeech.speak("Server error",TextToSpeech.QUEUE_FLUSH,
-//                                    null,null)
+
+                                val v: Vibrator =
+                                   context?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    v.vibrate(
+                                        VibrationEffect.createOneShot(
+                                            500,
+                                            VibrationEffect.DEFAULT_AMPLITUDE
+                                        )
+                                    )
+                                } else {
+                                    //deprecated in API 26
+                                    v.vibrate(500)
+                                }
+
+                                Toast.makeText(requireContext(),"Data Saved",Toast.LENGTH_SHORT).show()
+
+                                textToSpeech.speak("Data Saved",TextToSpeech.QUEUE_FLUSH,
+                                    null,null)
+                            }
+                            else if(it.code == "503")
+                            {
+                                Toast.makeText(requireContext(),it.message,Toast.LENGTH_SHORT).show()
+                                textToSpeech.speak(it.message,TextToSpeech.QUEUE_FLUSH,
+                                    null,null)
                             }
                             else
                             {
+                                Toast.makeText(requireContext(),"Server error",Toast.LENGTH_SHORT).show()
                                 textToSpeech.speak("Server error",TextToSpeech.QUEUE_FLUSH,
                                     null,null)
                             }
+
+                            databinding.tvOutTest.isEnabled = true
+                            databinding.tvOutTest.visibility = View.VISIBLE
+
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
@@ -236,7 +368,6 @@ class BaseFragment : Fragment() {
             }
             else
             {
-                databinding.tvOutTest.isEnabled = false
 
                 recording = !recording
 
@@ -248,48 +379,6 @@ class BaseFragment : Fragment() {
                 {
                     databinding.tvOutTest.text = "RECORD"
                 }
-
-                 GlobalScope.launch(Dispatchers.Main) {
-
-                     while (recording) {
-
-
-
-                         delay(4 * 1000.toLong())
-
-                         processData()
-                         Log.d("Samples", mergedClass.size.toString())
-                         //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
-
-                         Network.predict(mergedClass, STATE).observe(viewLifecycleOwner, Observer {
-                             try {
-
-                                 if (it.code.equals("200")) {
-                                     databinding.tvOutTest.isEnabled = true
-                                     databinding.tvOutTest.visibility = View.VISIBLE
-                                     databinding.textView.text = it.payload
-//                                textToSpeech.speak("Server error",TextToSpeech.QUEUE_FLUSH,
-//                                    null,null)
-
-                                     textToSpeech.speak(
-                                         it.payload, TextToSpeech.QUEUE_FLUSH,
-                                         null, null
-                                     )
-                                 } else {
-                                     textToSpeech.speak(
-                                         "Server error", TextToSpeech.QUEUE_FLUSH,
-                                         null, null
-                                     )
-                                 }
-
-                                 databinding.tvOutTest.isEnabled = true
-                                 databinding.tvOutTest.visibility = View.VISIBLE
-                             } catch (e: Exception) {
-                                 e.printStackTrace()
-                             }
-                         })
-                     }
-                 }
             }
 
         }
