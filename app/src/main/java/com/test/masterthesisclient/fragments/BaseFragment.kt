@@ -81,7 +81,7 @@ class BaseFragment : Fragment() {
                     )
                 )
 
-                if(dataListAcc.size >= 68)
+                if(dataListAcc.size >= 104)
                 {
                     recording = false
                     captureData()
@@ -128,8 +128,7 @@ class BaseFragment : Fragment() {
                 MergedClass(
                     databinding.spinner.text.toString(), dataListAcc[i].timestamp,
                     dataListAcc[i].x, dataListAcc[i].y, dataListAcc[i].z,
-                    dataListGy[i].x, dataListGy[i].x, dataListGy[i].x
-
+                    dataListGy[i].x, dataListGy[i].y, dataListGy[i].z
                 )
             )
         }
