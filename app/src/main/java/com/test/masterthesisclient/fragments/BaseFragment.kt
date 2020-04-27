@@ -1,6 +1,8 @@
 package com.test.masterthesisclient.fragments
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener2
@@ -18,12 +20,19 @@ import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.auth.IdpResponse
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.test.masterthesisclient.Network
 import com.test.masterthesisclient.R
 import com.test.masterthesisclient.config.Constants
@@ -41,6 +50,7 @@ import kotlin.collections.ArrayList
 
 class BaseFragment : Fragment() {
 
+    private val RC_SIGN_IN: Int = 1332
     private var dataListAcc = ArrayList<SensorPojo>()
     private var dataListGy = ArrayList<SensorPojo>()
     private var mergedClass = ArrayList<MergedClass>()
@@ -53,6 +63,8 @@ class BaseFragment : Fragment() {
     private var time = 0
     private var STATE = ""
     private lateinit var textToSpeech : TextToSpeech
+    private var firebaseUser : FirebaseUser? = null
+
 
 
     private lateinit var sensorManager : SensorManager
@@ -141,13 +153,13 @@ class BaseFragment : Fragment() {
     private fun captureData()
     {
 
-        for (i in 0 until 64)
+        for (i in 0 until 100)
         {
             mergedClass.add(
                 MergedClass(
                     databinding.spinner.text.toString(), dataListAcc[i].timestamp,
                     dataListAcc[i].x, dataListAcc[i].y, dataListAcc[i].z,
-                    dataListGy[i].x, dataListGy[i].x, dataListGy[i].x
+                    dataListGy[i].x, dataListGy[i].y, dataListGy[i].z
 
                 )
             )
@@ -164,7 +176,7 @@ class BaseFragment : Fragment() {
         Log.d("Samples", mergedClass.size.toString())
         //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
 
-        Network.predict(mergedClass, STATE)
+        Network.predict(mergedClass, STATE,firebaseUser?.uid.toString())
             .observe(viewLifecycleOwner, Observer {
                 try {
 
@@ -188,20 +200,24 @@ class BaseFragment : Fragment() {
                             "Data Saved",
                             Toast.LENGTH_SHORT
                         ).show()
-                        textToSpeech.speak(
-                            it.payload, TextToSpeech.QUEUE_FLUSH,
-                            null, null
-                        )
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            textToSpeech.speak(
+                                it.payload, TextToSpeech.QUEUE_FLUSH,
+                                null, null
+                            )
+                        }
                     } else if (it.code == "503") {
                         Toast.makeText(
                             requireContext(),
                             it.message,
                             Toast.LENGTH_SHORT
                         ).show()
-                        textToSpeech.speak(
-                            it.message, TextToSpeech.QUEUE_FLUSH,
-                            null, null
-                        )
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            textToSpeech.speak(
+                                it.message, TextToSpeech.QUEUE_FLUSH,
+                                null, null
+                            )
+                        }
                         databinding.tvOutTest.isEnabled = true
                         databinding.tvOutTest.visibility = View.VISIBLE
                     } else {
@@ -210,11 +226,13 @@ class BaseFragment : Fragment() {
                             "Server error",
                             Toast.LENGTH_SHORT
                         ).show()
-                        textToSpeech.speak(
-                            "Server error", TextToSpeech.QUEUE_FLUSH,
-                            null, null
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            textToSpeech.speak(
+                                "Server error", TextToSpeech.QUEUE_FLUSH,
+                                null, null
 
-                        )
+                            )
+                        }
                     }
 
                     databinding.tvOutTest.isEnabled = true
@@ -223,6 +241,43 @@ class BaseFragment : Fragment() {
                     e.printStackTrace()
                 }
             })
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+
+        firebaseUser = FirebaseAuth.getInstance().currentUser
+
+        if(firebaseUser == null)
+        {
+            startActivityForResult(
+                AuthUI.getInstance()
+                    .createSignInIntentBuilder()
+                    .setAvailableProviders(arrayListOf(AuthUI.IdpConfig.GoogleBuilder().build()))
+                    .build(),
+                RC_SIGN_IN)
+        }
+
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        when(requestCode)
+        {
+            RC_SIGN_IN -> {
+                val response = IdpResponse.fromResultIntent(data)
+
+                if (resultCode == Activity.RESULT_OK) {
+                    // Successfully signed in
+                    firebaseUser = FirebaseAuth.getInstance().currentUser
+                    // ...
+                } else {
+                    Toast.makeText(requireContext(),"Sign In Failed",Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
 
@@ -315,7 +370,7 @@ class BaseFragment : Fragment() {
                     //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
 
 
-                    Network.storeData(mergedClass).observe(viewLifecycleOwner, Observer {
+                    Network.storeData(mergedClass,firebaseUser?.uid.toString()).observe(viewLifecycleOwner, Observer {
                         try {
 
 

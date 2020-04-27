@@ -22,7 +22,7 @@ object Network {
         client = OkHttpClient().newBuilder().build()
     }
 
-    fun storeData(dataList : ArrayList<MergedClass>, type : String = "REC") : LiveData<ResponsePojo>
+    fun storeData(dataList : ArrayList<MergedClass>,id:String, type : String = "REC") : LiveData<ResponsePojo>
     {
 
         val json = JSONObject()
@@ -32,7 +32,7 @@ object Network {
 
         val body = json.toString().toRequestBody(MEDIA_TYPE)
 
-        Log.d("Request_url" ,Constants.ngrokBaseUrl+"/storeData")
+        Log.d("Request_url" ,"${Constants.ngrokBaseUrl}/storeData?id=$id")
         Log.d("Request_body" ,json.toString())
 
         dataList.clear()
@@ -41,7 +41,7 @@ object Network {
 
         val request = Request.Builder()
             .method("POST",body)
-            .url(Constants.ngrokBaseUrl+"/storeData")
+            .url("${Constants.ngrokBaseUrl}/storeData?id=$id")
             .post(body)
             .header("Accept", "application/json")
             .header("Content-Type", "application/json")
@@ -130,7 +130,7 @@ object Network {
         return responseLiveData
     }
 
-    fun predict(dataList : ArrayList<MergedClass>, type : String) : LiveData<ResponsePojo>
+    fun predict(dataList : ArrayList<MergedClass>, type : String,id: String) : LiveData<ResponsePojo>
     {
 
         val json = JSONObject()
@@ -144,14 +144,14 @@ object Network {
 
         dataList.clear()
 
-        Log.d("Request_url" ,Constants.ngrokBaseUrl+"/predict")
+        Log.d("Request_url" ,"${Constants.ngrokBaseUrl}/predict?id=$id")
         Log.d("Request_body" ,json.toString())
 
         val responseLiveData = MutableLiveData<ResponsePojo>()
 
         val request = Request.Builder()
             .method("POST",body)
-            .url(Constants.ngrokBaseUrl+"/predict")
+            .url("${Constants.ngrokBaseUrl}/predict?id=$id")
             .post(body)
             .header("Accept", "application/json")
             .header("Content-Type", "application/json")
