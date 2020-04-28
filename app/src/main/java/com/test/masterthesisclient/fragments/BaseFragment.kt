@@ -93,7 +93,7 @@ class BaseFragment : Fragment() {
                     )
                 )
 
-                if(dataListAcc.size >= 104)
+                if(databinding.swSelector.isChecked &&  dataListAcc.size >= 104)
                 {
                     recording = false
                     captureData()
@@ -340,6 +340,7 @@ class BaseFragment : Fragment() {
         databinding.tvOutTest.setOnClickListener {
 
 
+            if()
             textToSpeech.speak("Starting in 3 seconds",TextToSpeech.QUEUE_FLUSH,
                 null,null
             )
@@ -373,6 +374,7 @@ class BaseFragment : Fragment() {
                     Network.storeData(mergedClass,firebaseUser?.uid.toString()).observe(viewLifecycleOwner, Observer {
                         try {
 
+                            dataListAcc.clear()
 
                             if(it.code.equals("200")) {
                                 databinding.tvOutTest.isEnabled = true
