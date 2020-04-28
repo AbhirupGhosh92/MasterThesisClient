@@ -93,7 +93,7 @@ class BaseFragment : Fragment() {
                     )
                 )
 
-                if(databinding.swSelector.isChecked &&  dataListAcc.size >= 104)
+                if(databinding.swSelector.isChecked &&  dataListAcc.size >= 70)
                 {
                     recording = false
                     captureData()
@@ -153,7 +153,7 @@ class BaseFragment : Fragment() {
     private fun captureData()
     {
 
-        for (i in 0 until 100)
+        for (i in 0 until 64)
         {
             mergedClass.add(
                 MergedClass(
@@ -339,8 +339,6 @@ class BaseFragment : Fragment() {
 
         databinding.tvOutTest.setOnClickListener {
 
-
-            if()
             textToSpeech.speak("Starting in 3 seconds",TextToSpeech.QUEUE_FLUSH,
                 null,null
             )
