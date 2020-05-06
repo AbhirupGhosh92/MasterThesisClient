@@ -71,6 +71,7 @@ class BaseFragment : Fragment() {
     private lateinit var gyroscope : Sensor
     private var vibrateThreshold = 0.0f
     private lateinit var databinding : FragmentBaseBinding
+    private  var allowed = false
 
     private var accelerometerListner = object : SensorEventListener2
     {
@@ -353,80 +354,105 @@ class BaseFragment : Fragment() {
             )
 
             if(databinding.swSelector.isChecked.not()) {
-                databinding.tvOutTest.isEnabled = false
 
-                databinding.tvOutTest.visibility = View.GONE
+                if(allowed) {
+                    databinding.tvOutTest.isEnabled = false
 
-                GlobalScope.launch(Dispatchers.Main) {
+                    databinding.tvOutTest.visibility = View.GONE
 
-
-                    Toast.makeText(requireContext(),"Starting in 3 seconds",Toast.LENGTH_SHORT).show()
-                    for(i in 0..2)
-                    {
-
-                        delay(1000)
-                    }
-
-                    recording = true
-
-                    delay(time * 1000.toLong())
-                    recording = false
-
-                    processData()
-
-                    Log.d("Samples", mergedClass.size.toString())
-                    //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
+                    GlobalScope.launch(Dispatchers.Main) {
 
 
-                    Network.storeData(mergedClass,firebaseUser?.uid.toString()).observe(viewLifecycleOwner, Observer {
-                        try {
+                        Toast.makeText(
+                            requireContext(),
+                            "Starting in 3 seconds",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        for (i in 0..2) {
 
-                            dataListAcc.clear()
-
-                            if(it.code.equals("200")) {
-                                databinding.tvOutTest.isEnabled = true
-                                databinding.tvOutTest.visibility = View.VISIBLE
-
-                                val v: Vibrator =
-                                   context?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                    v.vibrate(
-                                        VibrationEffect.createOneShot(
-                                            500,
-                                            VibrationEffect.DEFAULT_AMPLITUDE
-                                        )
-                                    )
-                                } else {
-                                    //deprecated in API 26
-                                    v.vibrate(500)
-                                }
-
-                                Toast.makeText(requireContext(),"Data Saved",Toast.LENGTH_SHORT).show()
-
-                                textToSpeech.speak("Data Saved",TextToSpeech.QUEUE_FLUSH,
-                                    null,null)
-                            }
-                            else if(it.code == "503")
-                            {
-                                Toast.makeText(requireContext(),it.message,Toast.LENGTH_SHORT).show()
-                                textToSpeech.speak(it.message,TextToSpeech.QUEUE_FLUSH,
-                                    null,null)
-                            }
-                            else
-                            {
-                                Toast.makeText(requireContext(),"Server error",Toast.LENGTH_SHORT).show()
-                                textToSpeech.speak("Server error",TextToSpeech.QUEUE_FLUSH,
-                                    null,null)
-                            }
-
-                            databinding.tvOutTest.isEnabled = true
-                            databinding.tvOutTest.visibility = View.VISIBLE
-
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                            delay(1000)
                         }
-                    })
+
+                        recording = true
+
+                        delay(time * 1000.toLong())
+                        recording = false
+
+                        processData()
+
+                        Log.d("Samples", mergedClass.size.toString())
+                        //AlertDialog.Builder(activity).setMessage(dataListAcc.toString()).show()
+
+
+                        Network.storeData(mergedClass, firebaseUser?.uid.toString())
+                            .observe(viewLifecycleOwner, Observer {
+                                try {
+
+                                    dataListAcc.clear()
+
+                                    if (it.code.equals("200")) {
+                                        databinding.tvOutTest.isEnabled = true
+                                        databinding.tvOutTest.visibility = View.VISIBLE
+
+                                        val v: Vibrator =
+                                            context?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            v.vibrate(
+                                                VibrationEffect.createOneShot(
+                                                    500,
+                                                    VibrationEffect.DEFAULT_AMPLITUDE
+                                                )
+                                            )
+                                        } else {
+                                            //deprecated in API 26
+                                            v.vibrate(500)
+                                        }
+
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Data Saved",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                        textToSpeech.speak(
+                                            "Data Saved", TextToSpeech.QUEUE_FLUSH,
+                                            null, null
+                                        )
+                                    } else if (it.code == "503") {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            it.message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        textToSpeech.speak(
+                                            it.message, TextToSpeech.QUEUE_FLUSH,
+                                            null, null
+                                        )
+                                    } else {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Server error",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        textToSpeech.speak(
+                                            "Server error", TextToSpeech.QUEUE_FLUSH,
+                                            null, null
+                                        )
+                                    }
+
+                                    databinding.tvOutTest.isEnabled = true
+                                    databinding.tvOutTest.visibility = View.VISIBLE
+
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            })
+                    }
+                }
+                else
+                {
+                    Toast.makeText(requireContext(),"Action not allowd",Toast.LENGTH_SHORT).show()
                 }
             }
             else
@@ -453,6 +479,19 @@ class BaseFragment : Fragment() {
 
         databinding.spinner.setAdapter(adapter)
         databinding.spinner.addTextChangedListener {enteredText ->
+
+            for(item in Constants.actionList)
+            {
+                if(item == enteredText.toString())
+                {
+                    allowed = true
+                    break
+                }
+                else
+                {
+                    allowed = false
+                }
+            }
 
         }
 

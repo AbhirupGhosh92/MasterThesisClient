@@ -14,7 +14,7 @@ import com.test.masterthesisclient.R
 import com.test.masterthesisclient.config.Constants
 import com.test.masterthesisclient.databinding.AvailableActionsLayoutBinding
 
-class ActionsBottomSheet : BottomSheetDialogFragment() {
+class ActionsBottomSheet : BottomSheetDialogFragment()  {
 
     private lateinit var dataBinding : AvailableActionsLayoutBinding
 
