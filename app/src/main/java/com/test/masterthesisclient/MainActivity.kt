@@ -1,5 +1,6 @@
 package com.test.masterthesisclient
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.WindowManager
@@ -11,11 +12,13 @@ import androidx.databinding.DataBindingUtil
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.onNavDestinationSelected
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.firebase.ui.auth.AuthUI
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.auth.FirebaseAuth
 import com.test.masterthesisclient.databinding.ActivityMainBinding
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -49,12 +52,16 @@ class MainActivity : AppCompatActivity() {
 
                 R.id.actions ->
                 {
-
+                    navController.navigate(R.id.action_baseFragment_to_setActionBottomSheet)
+                    return@setNavigationItemSelectedListener true
                 }
 
                 R.id.logout ->
                 {
-
+                    AuthUI.getInstance().signOut(this)
+                    val intent = Intent(this,MainActivity::class.java)
+                    finish()
+                    startActivity(intent)
                 }
             }
 

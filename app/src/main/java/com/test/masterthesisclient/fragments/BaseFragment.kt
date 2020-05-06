@@ -41,6 +41,7 @@ import com.test.masterthesisclient.databinding.FragmentBaseBinding
 import com.test.masterthesisclient.models.MergedClass
 import com.test.masterthesisclient.models.SensorPojo
 import com.test.masterthesisclient.viewmodels.BaseFragmentViewModel
+import com.test.masterthesisclient.viewmodels.SharedViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -57,16 +58,13 @@ class BaseFragment : Fragment() {
     private var mergedClass = ArrayList<MergedClass>()
     private var recording = false
     private var actionType = "LYINGFLAT"
-    private var actionArray = arrayOf("LYINGFLAT", "WALKING", "RUNNING",
-        "SITTING", "STANDING",
-        "CLIMBING_UP_STAIRS",
-        "CLIMBING_DOWN_STAIRS")
+    private var actionArray = Constants.actionList
     private var time = 0
     private var STATE = ""
     private lateinit var textToSpeech : TextToSpeech
     private var firebaseUser : FirebaseUser? = null
 
-
+    private lateinit var sharedViewModel: SharedViewModel
 
     private lateinit var sensorManager : SensorManager
     private lateinit var accelerometer : Sensor
@@ -259,6 +257,9 @@ class BaseFragment : Fragment() {
                 RC_SIGN_IN)
         }
 
+        sharedViewModel = ViewModelProviders.of(requireActivity())[SharedViewModel::class.java]
+        sharedViewModel.getHost(requireContext())
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -290,12 +291,19 @@ class BaseFragment : Fragment() {
         databinding = DataBindingUtil.inflate(inflater,R.layout.fragment_base,container,false)
         sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-        textToSpeech = TextToSpeech(requireContext()){
-            if(it != TextToSpeech.ERROR) {
-                textToSpeech.setLanguage(Locale.UK)
+        if(context != null ) {
+            try {
+                textToSpeech = TextToSpeech(requireContext()) {
+                    if (it != TextToSpeech.ERROR) {
+                        textToSpeech.setLanguage(Locale.UK)
+                    }
+                }
+            }
+            catch (e : Exception)
+            {
+                e.printStackTrace()
             }
         }
-
 
 
         databinding.baseFragmentViewModel = ViewModelProviders.of(this)[BaseFragmentViewModel::class.java]
@@ -331,6 +339,11 @@ class BaseFragment : Fragment() {
 
 
             }
+
+
+        sharedViewModel.getHost(requireContext()).observe(viewLifecycleOwner, Observer {
+            databinding.edtServerUrl.text = it
+        })
 
 
         databinding.tvOutTest.setOnClickListener {

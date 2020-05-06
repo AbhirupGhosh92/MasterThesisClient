@@ -13,17 +13,20 @@
         <action
             android:id="@+id/action_baseFragment_to_setHostBottomSheet"
             app:destination="@id/setHostBottomSheet" />
+        <action
+            android:id="@+id/action_baseFragment_to_setActionBottomSheet"
+            app:destination="@id/setActionBottomSheet" />
     </fragment>
 
     <dialog
         android:id="@+id/setHostBottomSheet"
         tools:layout="@layout/set_host_bottom_sheet"
         android:name="com.test.masterthesisclient.fragments.SetHostBottomSheet"
-        android:label="SetHostBottomSheet" >
-        <action
-            android:id="@+id/action_setHostBottomSheet_to_baseFragment"
-            app:destination="@id/baseFragment"
-            app:popUpTo="@+id/setHostBottomSheet"
-            app:popUpToInclusive="true" />
-    </dialog>
+        android:label="SetHostBottomSheet" />
+
+    <dialog
+        android:id="@+id/setActionBottomSheet"
+        tools:layout="@layout/available_actions_layout"
+        android:name="com.test.masterthesisclient.fragments.ActionsBottomSheet"
+        android:label="SetHostBottomSheet" />
 </navigation>

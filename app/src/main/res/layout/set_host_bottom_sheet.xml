@@ -7,6 +7,16 @@
     android:gravity="center"
     android:layout_height="wrap_content">
 
+
+    <TextView
+
+        android:layout_marginTop="20dp"
+        android:text="Update Host"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
     <EditText
         android:id="@+id/edt_server_url"
         android:layout_marginTop="20dp"
