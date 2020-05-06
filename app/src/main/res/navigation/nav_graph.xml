@@ -9,5 +9,21 @@
         android:id="@+id/baseFragment"
         tools:layout="@layout/fragment_base"
         android:name="com.test.masterthesisclient.fragments.BaseFragment"
-        android:label="BaseFragment" />
+        android:label="Gaitor" >
+        <action
+            android:id="@+id/action_baseFragment_to_setHostBottomSheet"
+            app:destination="@id/setHostBottomSheet" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/setHostBottomSheet"
+        tools:layout="@layout/set_host_bottom_sheet"
+        android:name="com.test.masterthesisclient.fragments.SetHostBottomSheet"
+        android:label="SetHostBottomSheet" >
+        <action
+            android:id="@+id/action_setHostBottomSheet_to_baseFragment"
+            app:destination="@id/baseFragment"
+            app:popUpTo="@+id/setHostBottomSheet"
+            app:popUpToInclusive="true" />
+    </dialog>
 </navigation>

@@ -25,6 +25,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.ui.AppBarConfiguration
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -246,7 +247,6 @@ class BaseFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
         firebaseUser = FirebaseAuth.getInstance().currentUser
 
         if(firebaseUser == null)
@@ -296,11 +296,7 @@ class BaseFragment : Fragment() {
             }
         }
 
-        databinding.edtServerUrl.addTextChangedListener {
 
-            if(it.isNullOrEmpty().not())
-            Constants.ngrokBaseUrl = it.toString()
-        }
 
         databinding.baseFragmentViewModel = ViewModelProviders.of(this)[BaseFragmentViewModel::class.java]
 
