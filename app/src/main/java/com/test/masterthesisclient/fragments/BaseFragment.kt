@@ -93,7 +93,7 @@ class BaseFragment : Fragment() {
                     )
                 )
 
-                if(databinding.swSelector.isChecked &&  dataListAcc.size >= 70)
+                if(databinding.swSelector.isChecked &&  dataListAcc.size >= 70 && dataListGy.size >= 70)
                 {
                     recording = false
                     captureData()
